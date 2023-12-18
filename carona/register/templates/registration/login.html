@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=, initial-scale=1.0">
+    <title>Login</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <style>
+        .login {
+            width: 50%;
+            height: 50%;
+            /* Centralizar na vertical e na horizontal */
+            position: absolute;
+            top: 10%;
+            left: 25%;
+        }
+    </style>
+</head>
+
+{% load crispy_forms_tags %}
+
+<body class="container">
+    <div class="login">
+        <h3 class="title text-center">Login</h3>
+        <form method="POST" class="form-group">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <p>Não tem uma conta? Crie uma <a href="/register">aqui</a></p>
+            <button type="submit" class="btn btn-success">Login</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,311 @@
+{% extends 'main/main.html' %}
+
+{% block title %}
+Settings
+{% endblock %}
+
+{% block content %}
+<ul class="nav nav-tabs" id="myTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <a class="nav-link active" id="caronas-inscritas-tab" data-toggle="tab" href="#caronas-inscritas" role="tab" aria-controls="caronas-inscritas" aria-selected="true">Caronas inscritas</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" id="minhas-caronas-tab" data-toggle="tab" href="#minhas-caronas" role="tab" aria-controls="minhas-caronas" aria-selected="false">Minhas Caronas</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a class="nav-link" id="meus-veiculos-tab" data-toggle="tab" href="#meus-veiculos" role="tab" aria-controls="meus-veiculos" aria-selected="false">Meus Veículos</a>
+    </li>
+</ul>
+<div class="tab-content" id="myTabsContent">
+    <div class="tab-pane fade show active" id="caronas-inscritas" role="tabpanel" aria-labelledby="caronas-inscritas-tab">
+      <div class="card">
+        <div class="card-header">
+            <h2>Inscritas</h2>
+        </div>
+        <div class="card-body">
+            {% load custom_filters %}
+            {% if minhasinscricoes|length > 0 %}
+            {% for minha in minhasinscricoes %}
+              {% if minha.carona.horario|is_future_date and minha.status == 'A' %}
+              <div class="card mb-3">
+                  <div class="card-body">
+                      <h5 class="card-title">
+                        Origem: {{ minha.carona.origem }} - Destino: {{ minha.carona.destino }}
+                      </h5>
+                      <h5 class="card-subtitle mb-2">
+                        Descrição: {{ carona.descricao }}
+                      </h5>
+                      <h6 class="card-subtitle badge bg-light mb-2 text-muted">
+                        Vagas Disponíveis: {{ minha.carona.vagas_disponiveis }} - Data: {{ minha.carona.horario|date:"d/m/Y" }} - Horário: {{ minha.carona.horario|date:"H:i" }} - Valor: R$ {{ minha.carona.valor }}
+                      </h6>
+                      <ul class="list-group">
+                          {% for inscricao in inscricoes %}
+                              {% if inscricao.carona_id == minha.carona.id and inscricao.status == 'A' %}
+                                  <li class="list-group-item">Passageiro: {{ inscricao.funcionario.user.username }}</li>
+                              {% endif %}
+                          {% endfor %}
+                      </ul>
+                  </div>
+                  <div class="card-footer">
+                  <form method="post" action="{% url 'desistir' %}" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="carona_id" value="{{ minha.carona.id }}">
+                      <button type="submit" class="btn btn-danger btn-sm mr-2">Desistir</button>
+                    </form> 
+                  </div>
+              </div>
+              {% endif %}
+            {% endfor %}
+            {% else %}
+            <div class="text-center">
+              <h2 class='card-title bg-danger  my-5'>Você ainda não se inscreveu em uma carona.</h2>
+            </div>
+            {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="minhas-caronas" role="tabpanel" aria-labelledby="minhas-caronas-tab">
+        <div class="card ">
+            <div class="card-header">
+                <h2>Caronas</h2>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#caronaModal">
+                    Adicionar Carona
+                </button>
+            </div>
+            <div class="card-body">
+              {% load custom_filters %}
+              {% for carona in caronas %}
+              {% if carona.horario|is_future_date  %}
+              <div class="card mx-1 my-3">
+                  <div class="card-body">
+                      <h5 class="card-title">
+                          Origem: {{ carona.origem }} - Destino: {{ carona.destino }} - Vagas Disponíveis: {{ carona.vagas_disponiveis }}
+                      </h5>
+                      <h5 class="card-subtitle mb-2">
+                          Descrição: {{ carona.descricao }}
+                     </h5>
+                      <h6 class="card-subtitle badge bg-light mb-2 text-muted">
+                          Veículo: {{ carona.veiculo.modelo }} - Data: {{ carona.horario|date:"d/m/Y" }} - Horario: {{ carona.horario|date:"H:i" }} - Valor: R$ {{ carona.valor }}
+                      </h6>
+                      <ul class="list-group">
+                        {% for inscricao in inscricoes %}
+                            {% if inscricao.carona_id == carona.id and inscricao.status == 'A' %}
+                                <li class="list-group-item">Passageiro: {{ inscricao.funcionario.user.username }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                  </div>
+                  <div class="card-footer">
+                      <form method="post" action="{% url 'concluir_carona' carona.id %}" class="d-inline">
+                          {% csrf_token %}
+                          <input type="hidden" name="carona_id" value="{{ carona.id }}">
+                          <button type="submit" class="btn btn-success btn-sm mr-2">Concluir Carona</button>
+                      </form>
+                      <form method="post" action="{% url 'excluir_carona' carona.id %}" class="d-inline">
+                          {% csrf_token %}
+                          <input type="hidden" name="carona_id" value="{{ carona.id }}">
+                          <button type="submit" class="btn btn-danger btn-sm mr-2">Excluir Carona</button>
+                      </form>
+                      {% if carona.vagas_disponiveis > 0 %}
+                      <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#solicitacoesModal{{ carona.id }}">
+                          Solicitações
+                      </button>
+                      {% endif %}
+                      <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editCaronaModal{{ carona.id }}">
+                          Editar
+                      </button>
+                    </div>
+                    
+                    {% comment %} MODAL SOLICITAÇÔES {% endcomment %}
+                    <div class="modal fade" id="solicitacoesModal{{ carona.id }}" tabindex="-1" role="dialog" aria-labelledby="solicitacoesModalLabel{{ carona.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="solicitacoesModalLabel{{ carona.id }}">Solicitações</h5>
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                            </div>
+                            <div class="modal-body">
+                              {% for inscricao in inscricoes %}
+                              {% if inscricao.carona_id == carona.id and inscricao.status == 'P' %}
+                              <div class="card bg-light mb-3">
+                                <div class="card-body">
+                                  <form method="post" action="{% url 'aceitar_inscricao' carona_id=carona.id inscricao_id=inscricao.id %}" class="d-inline">
+                                  {% csrf_token %}
+                                  <h5 class="card-title">Inscrição de: {{ inscricao.funcionario.user.username }}</h5>
+                                  <input type="hidden" name="veiculo_id" value="{{ veiculo.id }}">
+                                  <button type="submit" class="btn btn-success btn-sm mr-2">Aceitar</button>
+                                  </form>
+                                  <form method="post" action="{% url 'rejeitar_inscricao' carona_id=carona.id inscricao_id=inscricao.id %}" class="d-inline">
+                                  {% csrf_token %}
+                                  <input type="hidden" name="veiculo_id" value="{{ veiculo.id }}">
+                                  <button type="submit" class="btn btn-danger btn-sm mr-2">Rejeitar</button>
+                                  </form>
+                                  </div>
+                                </div>
+                              {% endif %}
+                              {% endfor %}
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+                   
+                    {% comment %} MODAL EDITAR {% endcomment %}
+                    <div class="modal fade" id="editCaronaModal{{ carona.id }}" tabindex="-1" role="dialog" aria-labelledby="editCaronaModalLabel{{ carona.id }}" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                              <div class="modal-header">
+                                  <h5 class="modal-title" id="editCaronaModalLabel{{ carona.id }}">Editar Carona</h5>
+                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                      <span aria-hidden="true">&times;</span>
+                                  </button>
+                              </div>
+                              <div class="modal-body">
+                                <form method="post" id="editCaronaForm" action="{% url 'edit_carona' carona.id %}" autocomplete="off">
+                                  {% csrf_token %}
+    
+                                <div class="form-group">
+                                    <label for="{{ edit_carona_form.origem.id_for_label }}">Origem</label>
+                                    <input type="text" class="form-control" name="{{ edit_carona_form.origem.name }}" id="{{ edit_carona_form.origem.id_for_label }}" placeholder="Origem" value="{{ carona.origem }}">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ edit_carona_form.destino.id_for_label }}">Destino</label>
+                                    <input type="text" class="form-control" name="{{ edit_carona_form.destino.name }}" id="{{ edit_carona_form.destino.id_for_label }}" placeholder="Destino" value="{{ carona.destino }}">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ edit_carona_form.horario.id_for_label }}">Data e hora</label>
+                                    <input type="datetime-local" class="form-control" name="{{ edit_carona_form.horario.name }}" id="{{ edit_carona_form.horario.id_for_label }}" value="{{ carona.horario|date:'Y-m-d\TH:i' }}">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ edit_carona_form.valor.id_for_label }}">Valor</label>
+                                    <input type="number" class="form-control" name="{{ edit_carona_form.valor.name }}" id="{{ edit_carona_form.valor.id_for_label }}" placeholder="Valor" value="{{ carona.valor|format_decimal }}">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ edit_carona_form.descricao.id_for_label }}">Descrição</label>
+                                    <textarea class="form-control" name="{{ edit_carona_form.descricao.name }}" id="{{ edit_carona_form.descricao.id_for_label }}">{{ carona.descricao }}</textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ edit_carona_form.vagas_disponiveis.id_for_label }}">Vagas Disponíveis</label>
+                                    <input type="number" class="form-control" name="{{ edit_carona_form.vagas_disponiveis.name }}" id="{{ edit_carona_form.vagas_disponiveis.id_for_label }}" value="{{ carona.vagas_disponiveis }}">
+                                </div>
+                                  <button type="submit" class="btn btn-primary mt-3">Salvar Alterações</button>
+                              </form>
+                                               
+                              </div>
+                              <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
+                </div>
+                {% endif %}
+                {% endfor %}
+                
+                {% comment %} MODAL CADASTRAR CARONA {% endcomment %}
+                <div class="modal fade" id="caronaModal" tabindex="-1" role="dialog" aria-labelledby="caronaModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="caronaModalLabel">Cadastrar Carona</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="modal-body">
+                          {% if carona_form %}
+                          <form method="post" action="{% url 'cadastrar_carona' %}">
+                            {% csrf_token %}
+                            {{ carona_form.as_p }}
+                            <button class="btn btn-primary" type="submit">Cadastrar Carona</button>
+                          </form>
+                          {% else %}
+                          <div class="text-center">
+                            <h2 class='card-title bg-danger  my-5'>Você precisa ter um veículo.</h2>
+                          </div>
+                          {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="tab-pane fade" id="meus-veiculos" role="tabpanel" aria-labelledby="meus-veiculos-tab">
+        <div class="card">
+            <div class="card-header">
+                <h2>Veículos</h2>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#veiculoModal">
+                    Adicionar Veiculo
+                </button>
+            </div>
+            <div class="card-body">
+              {% for veiculo in veiculos %}
+              <div class="card mx-1 my-3">
+                  <div class="card-body">
+                      <h5 class="card-title">
+                          Modelo: {{ veiculo.modelo }} - Cor: {{ veiculo.cor }}
+                      </h5>
+                      <h6 class="card-subtitle badge bg-light mb-2 text-muted">
+                          Placa: {{ veiculo.placa }} - Capacidade: {{ veiculo.capacidade }} Pessoas
+                      </h6>
+                  </div>
+                  <div class="card-footer">
+                      <form method="post" action="{% url 'excluir_veiculo' veiculo.id %}" class="d-inline">
+                          {% csrf_token %}
+                          <input type="hidden" name="veiculo_id" value="{{ veiculo.id }}">
+                          <button type="submit" class="btn btn-danger btn-sm mr-2">Excluir Veículo</button>
+                      </form>
+                  </div>
+              </div>
+              {% endfor %}
+
+              {% comment %} MODAL CADASTRAR VEÍCULO {% endcomment %}
+
+              <div class="modal fade" id="veiculoModal" tabindex="-1" role="dialog" aria-labelledby="veiculoModalLabel" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="veiculoModalLabel">Cadastrar Veículo</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <form method="post" action="{% url 'cadastrar_veiculo' %}" autocomplete="off">
+                          {% csrf_token %}
+                          {{ veiculo_form.as_p }}
+                          <button type="submit" class="btn btn-primary">Cadastrar</button>
+                        </form>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+{% endblock %}

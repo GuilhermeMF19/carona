@@ -1,0 +1,59 @@
+{% extends 'main/main.html' %}
+
+{% block title %}
+Caronas
+{% endblock %}
+
+{% block content %}
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h2>Caronas</h2>
+        </div>
+        {% load custom_filters %}
+        {% if caronas|length > 0 %}
+        {% for carona in caronas|dictsort:"horario" %}
+            {% if carona.vagas_disponiveis > 0 and carona.horario|is_future_date  %}
+            <div class="card mx-3 my-3">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        Origem: {{ carona.origem }} - Destino: {{ carona.destino }}
+                    </h5>
+                    <h5 class="card-subtitle mb-2">
+                        Descrição: {{ carona.descricao }}
+                    </h5>
+                    <h6 class="card-subtitle badge bg-light mb-2 text-muted">
+                        Motorista: {{ carona.motorista.user.username }} - Data: {{ carona.horario|date:"d/m/Y" }} - Horario: {{ carona.horario|date:"H:i" }} - Valor: R$ {{ carona.valor }}
+                    </h6>
+                    <ul class="list-group">
+                        {% for inscricao in inscricoes %}
+                            {% if inscricao.carona_id == carona.id and inscricao.status == 'A' %}
+                                <li class="list-group-item">Passageiro: {{ inscricao.funcionario.user.username }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    {% if carona.motorista.user.username != request.user.username %}
+                    <form method="post" action="{% url 'inscrever' %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="carona_id" value="{{ carona.id }}">
+                        <button type="submit" class="btn btn-success btn-sm mr-2">Inscrever-se</button>
+                    </form>
+                    {% else %}
+                    <a href="/settings/" class="btn btn-primary btn-sm mr-2">Minha carona</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}    
+        {% else %}
+        <div class="text-center">
+        <h2 class='card-title bg-danger  my-5'>Não há caronas disponíveis</h2>
+        </div>
+        {% endif %}
+    </div>
+
+
+{% endblock %}
+
